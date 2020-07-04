@@ -31,6 +31,7 @@ public class TraversalApplication {
 
         if (result[0] % 100000 == 0) {
             log.info("Created so far {}", result[0]);
+            logMemoryUsage();
         }
 
         if (result[0] >= MAX_FILES) {
@@ -52,7 +53,7 @@ public class TraversalApplication {
 
     }
 
-    private static void directoryRaversal(String root) throws IOException {
+    private static void directoryTraversal(String root) throws IOException {
         int[] count = new int[1];
 
         Files.walkFileTree(Paths.get(root), new FileVisitor<Path>() {
@@ -88,6 +89,47 @@ public class TraversalApplication {
         log.info("Totally visited paths {}", count[0]);
     }
 
+    private static void directoryRemoval(String root) throws IOException {
+        int[] count = new int[1];
+
+        Files.walkFileTree(Paths.get(root), new FileVisitor<Path>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs)
+                throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) throws IOException {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc)
+                throws IOException {
+                count[0]++;
+
+                if (Files.list(dir).count() == 0) {
+                    Files.delete(dir);
+                }
+
+                if (count[0] % 100000 == 0) {
+                    log.info("Visisted {} paths {}", count[0], dir.toString());
+                    logMemoryUsage();
+                }
+                return FileVisitResult.CONTINUE;
+            }
+        });
+
+        log.info("Totally visited paths {}", count[0]);
+    }
+
     private static void logMemoryUsage() {
         log.info("KB: " + (double) (Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory()) / 1024);
 
@@ -96,17 +138,21 @@ public class TraversalApplication {
     public static void main(String[] args) {
 
         try {
-//            log.info("Started directory creation");
+            log.info("Started directory creation");
 //            try {
 //                createDirsRecursively("./" + ROOT);
 //            } catch (IllegalArgumentException ie) {
 //                log.error("Finished", ie);
 //            }
 //            log.info("Finished directory creation");
+//
+//            log.info("Started directory traversal");
+//            directoryTraversal("./" + ROOT);
+//            log.info("Finished directory traversal");
 
-            log.info("Started directory traversal");
-            directoryRaversal("./" + ROOT);
-            log.info("Finished directory traversal");
+            log.info("Started directory removal");
+            directoryRemoval("./" + ROOT);
+            log.info("Finished directory removal");
 
         } catch(IOException ioException) {
             log.error("Error occurred", ioException);
